@@ -1,0 +1,254 @@
+<?php
+/**
+ * Librairie d'aide pour la configuration des FEATURES (uniquement) sur la production
+ * -- ATTENTION --
+ * Ces fonctions ne doivent pas être utilisées pour migrer du contenu
+ */
+
+/**
+ * Callback de la commande drush 'refresh-permissions'
+ * Mise à jour du fichier permissions.json
+ * @param $file
+ * @return string
+ */
+function _refresh_permissions($file) {
+
+    $roles = db_select('role', 'r')
+        ->fields('r', array('rid', 'name'))
+        ->execute()
+        ->fetchAllAssoc('rid');
+
+    $permissions = db_select('role_permission', 'rp')
+        ->distinct()
+        ->fields('rp', array('permission'))
+        ->execute()
+        ->fetchCol();
+
+    $permissions_to_write = array();
+    foreach($roles as $rid => $role) {
+
+        $permissions_by_role = db_select('role_permission', 'rp')
+            ->fields('rp', array('permission'))
+            ->condition('rid', $rid)
+            ->execute()
+            ->fetchCol();
+
+        $permissions_diff = array_diff($permissions, $permissions_by_role);
+        foreach($permissions_by_role as $key => $permission) {
+            $permissions_to_write[$role->name][$permission] = 1;
+        }
+
+        foreach($permissions_diff as $key => $permission) {
+            $permissions_to_write[$role->name][$permission] = 0;
+        }
+    }
+
+    $permissions_json = json_encode($permissions_to_write, JSON_PRETTY_PRINT);
+
+    $error = '';
+    $fhandler = @fopen($file, 'w');
+    if(!$fhandler) {
+        $error = 'Error occurred in open file';
+    } else {
+        if(fwrite($fhandler, $permissions_json) === false) {
+            $error = 'Error occurred in writing file';
+        }
+        fclose($fhandler);
+    }
+
+    return $error;
+}
+
+/**
+ * Création d'utilisateur de base pour les rôles
+ * webemestre / administrator
+ * @param $name
+ * @param $mail
+ * @param $pass
+ * @param $role_name
+ */
+function _create_base_user($name, $mail, $pass, $role_name) {
+    $rid = _get_rid_by_name($role_name);
+    $fields = array(
+        'name' => $name,
+        'mail' => $mail,
+        'pass' => $pass,
+        'init' => $mail,
+        'status' => 1,
+        'roles' => array(
+            $rid => $role_name
+        )
+    );
+
+    user_save('', $fields);
+}
+
+/**
+ * Création d'une node
+ * pour le setup de page de configuration uniquement
+ * comme la page d'accueil du site
+ * @param $type
+ * @param $title
+ * @return mixed
+ */
+function _create_node($type, $title) {
+    $node = new stdClass();
+    $node->type = $type;
+    $node->title = $title;
+    $node->status = 1;
+    $node->language = 'und';
+    node_save($node);
+    return $node->nid;
+}
+
+/**
+ * Création d'un compte et setup des permissions (modules)
+ * pour la configuration des comptes sa + webmestre
+ * @param $role_name
+ * @param $weight
+ * @param $file_access_path
+ */
+function _set_new_role($role_name, $weight, $file_access_path) {
+
+    if(_create_role($role_name, $weight)) {
+        //$rid = _get_rid_by_name($role_name);
+        _set_user_permissions($role_name, $file_access_path);
+    }
+}
+
+function _user_change_weight($role_name, $weight) {
+    db_update('role')
+        ->fields(array(
+            'weight' => $weight
+        ))
+        ->condition('name', $role_name, '=')
+        ->execute();
+}
+
+/**
+ * Setup des permissions
+ * @param $rid
+ * @param $file_access_path
+ */
+function _set_user_permissions($role_name, $permissions_path) {
+    $rid = _get_rid_by_name($role_name);
+    $file_content_access = file_get_contents($permissions_path);
+    $roles_access_to_active = json_decode($file_content_access, true);
+    user_role_change_permissions($rid, $roles_access_to_active[$role_name]);
+}
+
+/**
+ * Création d'un rôle avec son poids
+ * @param $name
+ * @param $weight
+ * @return boolean
+ */
+function _create_role($name, $weight) {
+    $role = new stdClass();
+    $role->name = $name;
+    $role->weight = $weight;
+    return user_role_save($role);
+}
+
+/**
+ * Récupérer le rôle ID par le nom de rôle
+ * @param $role_name
+ * @return mixed
+ */
+function _get_rid_by_name($role_name) {
+    $rid = db_select('role', 'r')
+        ->fields('r', array('rid'))
+        ->condition('name', $role_name, '=')
+        ->execute()
+        ->fetchField();
+
+    return $rid;
+}
+
+/**
+ * Pour la mise à jour de tous les composants d'une feature
+ * @param $modules
+ */
+function _features_revert_all_components($modules) {
+
+    $reverts = array();
+    foreach($modules as $module) {
+        $feature = features_get_features($module);
+        $components = array_keys($feature->info['features']);
+        $reverts[$module] = $components;
+    }
+
+    features_revert($reverts);
+}
+
+/**
+ * @param $key
+ * @param $text_path
+ * @return mixed
+ */
+function _get_user_mail_register_text($key, $text_path) {
+    $user_register_ini_content = parse_ini_file($text_path, TRUE);
+    return $user_register_ini_content[$key];
+}
+
+/**
+ * Pour rendre le script de déploiement un peu verbeux
+ */
+function _trace() {
+    $traces = debug_backtrace();
+    if(isset($traces[1]['function'])) {
+        $function = $traces[1]['function'];
+        echo 'Execution de la fonction ' . $function . '()';
+    }
+}
+
+/**
+ * Permet de mettre à jour les alias que l'on a pu créer
+ * @param $alias_path
+ * @param $language
+ */
+function _update_alias($alias_path, $language) {
+
+    $alias_ini_content = parse_ini_file($alias_path);
+    foreach($alias_ini_content as $existing => $new_alias) {
+        $path = array();
+        $path['source'] = $existing;
+        $path['alias'] = $new_alias;
+        $path['language'] = $language;
+        if(module_exists('path'))
+            path_save($path);
+        else
+            echo 'Mise à jour des alias impossible.';
+    }
+
+    /*
+    $path_register = array(
+        'source' => 'user/register',
+        'alias' => 'creation-compte',
+        'language' => 'fr'
+    );
+    path_save($path_register);*/
+}
+
+/**
+ * Permet d'ajouter un pattern de PathAuto et de regénérer les alias
+ * @param   $pattern
+ * @todo    Filtrer les alias à regénérer (node/*, user/* ou taxonomy/term/*) et dans le cas de node, filtrer le node->type
+ */
+function _new_pathauto_pattern($pattern) {
+
+    module_load_include('inc', 'pathauto');
+    module_load_include('inc', 'pathauto.pathauto');
+
+    /* On créer notre nouveau motif */
+    variable_set('pathauto_node_pattern', $pattern);
+
+    /* Suppression des alias existants */
+    db_delete('url_alias')
+        ->condition('source', 'node/%', 'LIKE')
+        ->execute();
+
+    /* On regenere les alias */
+    $nids = db_query("SELECT nid FROM node")->fetchCol();
+    pathauto_node_update_alias_multiple($nids, 'bulkupdate');
+}
