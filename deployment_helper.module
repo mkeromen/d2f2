@@ -1,87 +1,12 @@
 <?php
 /**
  * Librairie d'aide pour la configuration des FEATURES (uniquement) sur la production
- * -- ATTENTION --
+ * ** NB **
  * Ces fonctions ne doivent pas être utilisées pour migrer du contenu
  */
 
-/**
- * Callback de la commande drush 'refresh-permissions'
- * Mise à jour du fichier permissions.json
- * @param $file
- * @return string
- */
-function _refresh_permissions($file) {
+include_once('src/user.inc');
 
-    $roles = db_select('role', 'r')
-        ->fields('r', array('rid', 'name'))
-        ->execute()
-        ->fetchAllAssoc('rid');
-
-    $permissions = db_select('role_permission', 'rp')
-        ->distinct()
-        ->fields('rp', array('permission'))
-        ->execute()
-        ->fetchCol();
-
-    $permissions_to_write = array();
-    foreach($roles as $rid => $role) {
-
-        $permissions_by_role = db_select('role_permission', 'rp')
-            ->fields('rp', array('permission'))
-            ->condition('rid', $rid)
-            ->execute()
-            ->fetchCol();
-
-        $permissions_diff = array_diff($permissions, $permissions_by_role);
-        foreach($permissions_by_role as $key => $permission) {
-            $permissions_to_write[$role->name][$permission] = 1;
-        }
-
-        foreach($permissions_diff as $key => $permission) {
-            $permissions_to_write[$role->name][$permission] = 0;
-        }
-    }
-
-    $permissions_json = json_encode($permissions_to_write, JSON_PRETTY_PRINT);
-
-    $error = '';
-    $fhandler = @fopen($file, 'w');
-    if(!$fhandler) {
-        $error = 'Error occurred in open file';
-    } else {
-        if(fwrite($fhandler, $permissions_json) === false) {
-            $error = 'Error occurred in writing file';
-        }
-        fclose($fhandler);
-    }
-
-    return $error;
-}
-
-/**
- * Création d'utilisateur de base pour les rôles
- * webemestre / administrator
- * @param $name
- * @param $mail
- * @param $pass
- * @param $role_name
- */
-function _create_base_user($name, $mail, $pass, $role_name) {
-    $rid = _get_rid_by_name($role_name);
-    $fields = array(
-        'name' => $name,
-        'mail' => $mail,
-        'pass' => $pass,
-        'init' => $mail,
-        'status' => 1,
-        'roles' => array(
-            $rid => $role_name
-        )
-    );
-
-    user_save('', $fields);
-}
 
 /**
  * Création d'une node
@@ -101,29 +26,8 @@ function _create_node($type, $title) {
     return $node->nid;
 }
 
-/**
- * Création d'un compte et setup des permissions (modules)
- * pour la configuration des comptes sa + webmestre
- * @param $role_name
- * @param $weight
- * @param $file_access_path
- */
-function _set_new_role($role_name, $weight, $file_access_path) {
 
-    if(_create_role($role_name, $weight)) {
-        //$rid = _get_rid_by_name($role_name);
-        _set_user_permissions($role_name, $file_access_path);
-    }
-}
 
-function _user_change_weight($role_name, $weight) {
-    db_update('role')
-        ->fields(array(
-            'weight' => $weight
-        ))
-        ->condition('name', $role_name, '=')
-        ->execute();
-}
 
 /**
  * Setup des permissions
@@ -232,16 +136,21 @@ function _update_alias($alias_path, $language) {
 
 /**
  * Permet d'ajouter un pattern de PathAuto et de regénérer les alias
- * @param   $pattern
+ * @param string $nodeType (avec des underscores !)
+ * @param string $pattern
  * @todo    Filtrer les alias à regénérer (node/*, user/* ou taxonomy/term/*) et dans le cas de node, filtrer le node->type
  */
-function _new_pathauto_pattern($pattern) {
+function _new_pathauto_pattern($nodeType = 'node', $pattern) {
 
     module_load_include('inc', 'pathauto');
     module_load_include('inc', 'pathauto.pathauto');
 
     /* On créer notre nouveau motif */
-    variable_set('pathauto_node_pattern', $pattern);
+    if($nodeType == 'node'){
+        variable_set('pathauto_node_pattern', $pattern);
+    }else{
+        variable_set('pathauto_node_' . $nodeType . '_pattern', $pattern);
+    }
 
     /* Suppression des alias existants */
     db_delete('url_alias')
@@ -251,4 +160,30 @@ function _new_pathauto_pattern($pattern) {
     /* On regenere les alias */
     $nids = db_query("SELECT nid FROM node")->fetchCol();
     pathauto_node_update_alias_multiple($nids, 'bulkupdate');
+}
+
+/**
+ * Permet de mettre à jour les menus disponibles
+ * depuis le type de contenu sélectionné
+ * @param $type
+ * @param $menus
+ */
+function _set_menu_options($type, $menus) {
+    variable_set('menu_options_' . $type, $menus);
+}
+
+/**
+ * Permet la création d'un menu
+ * @param $menu_name
+ * @param $title
+ * @param $description
+ */
+function _create_menu($menu_name, $title, $description) {
+    $menu_settings = array(
+        'menu_name' => $menu_name,
+        'title' => $title,
+        'description' => $description
+    );
+
+    menu_save($menu_settings);
 }

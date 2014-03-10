@@ -2,3 +2,4 @@ name = "Deployment Helper"
 description = "Module d'aide au déploiement pour effectuer des manipulations simples avec les API core de Drupal"
 core = 7.x
 package = "Absolunet"
+
