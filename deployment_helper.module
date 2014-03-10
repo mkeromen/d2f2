@@ -6,67 +6,28 @@
  */
 
 include_once('src/user.inc');
+include_once('src/node.inc');
+include_once('src/config.inc');
 
 
 /**
- * Création d'une node
- * pour le setup de page de configuration uniquement
- * comme la page d'accueil du site
- * @param $type
- * @param $title
- * @return mixed
+ * Implements hook_menu()
+ * TODO : Générer automatiquement ce hook à l'installation du module
  */
-function _create_node($type, $title) {
-    $node = new stdClass();
-    $node->type = $type;
-    $node->title = $title;
-    $node->status = 1;
-    $node->language = 'und';
-    node_save($node);
-    return $node->nid;
+function deployment_helper_menu() {
+
+    $items['debug-deployment'] = array(
+        'title' => 'Test déploiement',
+        'type' => MENU_NORMAL_ITEM,
+        'access arguments' => array('access content'),
+        'page callback' => '_debug_deployment'
+    );
+
+    return $items;
 }
 
-
-
-
-/**
- * Setup des permissions
- * @param $rid
- * @param $file_access_path
- */
-function _set_user_permissions($role_name, $permissions_path) {
-    $rid = _get_rid_by_name($role_name);
-    $file_content_access = file_get_contents($permissions_path);
-    $roles_access_to_active = json_decode($file_content_access, true);
-    user_role_change_permissions($rid, $roles_access_to_active[$role_name]);
-}
-
-/**
- * Création d'un rôle avec son poids
- * @param $name
- * @param $weight
- * @return boolean
- */
-function _create_role($name, $weight) {
-    $role = new stdClass();
-    $role->name = $name;
-    $role->weight = $weight;
-    return user_role_save($role);
-}
-
-/**
- * Récupérer le rôle ID par le nom de rôle
- * @param $role_name
- * @return mixed
- */
-function _get_rid_by_name($role_name) {
-    $rid = db_select('role', 'r')
-        ->fields('r', array('rid'))
-        ->condition('name', $role_name, '=')
-        ->execute()
-        ->fetchField();
-
-    return $rid;
+function _debug_deployment() {
+    return 'Hello debug';
 }
 
 /**
@@ -85,15 +46,6 @@ function _features_revert_all_components($modules) {
     features_revert($reverts);
 }
 
-/**
- * @param $key
- * @param $text_path
- * @return mixed
- */
-function _get_user_mail_register_text($key, $text_path) {
-    $user_register_ini_content = parse_ini_file($text_path, TRUE);
-    return $user_register_ini_content[$key];
-}
 
 /**
  * Pour rendre le script de déploiement un peu verbeux
@@ -104,72 +56,6 @@ function _trace() {
         $function = $traces[1]['function'];
         echo 'Execution de la fonction ' . $function . '()';
     }
-}
-
-/**
- * Permet de mettre à jour les alias que l'on a pu créer
- * @param $alias_path
- * @param $language
- */
-function _update_alias($alias_path, $language) {
-
-    $alias_ini_content = parse_ini_file($alias_path);
-    foreach($alias_ini_content as $existing => $new_alias) {
-        $path = array();
-        $path['source'] = $existing;
-        $path['alias'] = $new_alias;
-        $path['language'] = $language;
-        if(module_exists('path'))
-            path_save($path);
-        else
-            echo 'Mise à jour des alias impossible.';
-    }
-
-    /*
-    $path_register = array(
-        'source' => 'user/register',
-        'alias' => 'creation-compte',
-        'language' => 'fr'
-    );
-    path_save($path_register);*/
-}
-
-/**
- * Permet d'ajouter un pattern de PathAuto et de regénérer les alias
- * @param string $nodeType (avec des underscores !)
- * @param string $pattern
- * @todo    Filtrer les alias à regénérer (node/*, user/* ou taxonomy/term/*) et dans le cas de node, filtrer le node->type
- */
-function _new_pathauto_pattern($nodeType = 'node', $pattern) {
-
-    module_load_include('inc', 'pathauto');
-    module_load_include('inc', 'pathauto.pathauto');
-
-    /* On créer notre nouveau motif */
-    if($nodeType == 'node'){
-        variable_set('pathauto_node_pattern', $pattern);
-    }else{
-        variable_set('pathauto_node_' . $nodeType . '_pattern', $pattern);
-    }
-
-    /* Suppression des alias existants */
-    db_delete('url_alias')
-        ->condition('source', 'node/%', 'LIKE')
-        ->execute();
-
-    /* On regenere les alias */
-    $nids = db_query("SELECT nid FROM node")->fetchCol();
-    pathauto_node_update_alias_multiple($nids, 'bulkupdate');
-}
-
-/**
- * Permet de mettre à jour les menus disponibles
- * depuis le type de contenu sélectionné
- * @param $type
- * @param $menus
- */
-function _set_menu_options($type, $menus) {
-    variable_set('menu_options_' . $type, $menus);
 }
 
 /**

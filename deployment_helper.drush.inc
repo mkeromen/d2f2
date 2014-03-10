@@ -27,7 +27,7 @@ function drush_deployment_helper_refresh_permissions($module = '') {
         return drush_set_error('You must have folder "config/permissions.json" in your deployment module');
     }
 
-    $error = _refresh_permissions($file);
+    $error = _user_refresh_permissions($file);
     if(empty($error)) {
         drush_print('File of permissions has been correctly updated !');
     } else {

@@ -1,7 +1,7 @@
 <?php
 /**
  * ****************************************************
- * Helper pour la gestion des utilisateurs dans Drupal
+ * Helper de déploiement pour la gestion des utilisateurs dans Drupal
  * ****************************************************
  */
 
@@ -68,7 +68,7 @@ function _user_refresh_permissions($file) {
  * @param $role_name
  */
 function _user_create($name, $mail, $pass, $role_name) {
-    $rid = _get_rid_by_name($role_name);
+    $rid = _user_get_rid_by_name($role_name);
     $fields = array(
         'name' => $name,
         'mail' => $mail,
@@ -84,6 +84,19 @@ function _user_create($name, $mail, $pass, $role_name) {
 }
 
 /**
+ * Création d'un rôle avec son poids
+ * @param $name
+ * @param $weight
+ * @return boolean
+ */
+function _user_create_role($name, $weight) {
+    $role = new stdClass();
+    $role->name = $name;
+    $role->weight = $weight;
+    return user_role_save($role);
+}
+
+/**
  * Création d'un compte et setup des permissions (modules)
  * pour la configuration des comptes sa + webmestre
  * @param $role_name
@@ -92,13 +105,29 @@ function _user_create($name, $mail, $pass, $role_name) {
  */
 function _user_set_new_role($role_name, $weight, $file_access_path) {
 
-    if(_create_role($role_name, $weight)) {
-        //$rid = _get_rid_by_name($role_name);
-        _set_user_permissions($role_name, $file_access_path);
+    if(_user_create_role($role_name, $weight)) {
+        _user_set_permissions($role_name, $file_access_path);
     }
 }
 
+/**
+ * Setup des permissions
+ * @param $rid
+ * @param $file_access_path
+ */
+function _user_set_permissions($role_name, $permissions_path) {
+    $rid = _user_get_rid_by_name($role_name);
+    $file_content_access = file_get_contents($permissions_path);
+    $roles_access_to_active = json_decode($file_content_access, true);
+    user_role_change_permissions($rid, $roles_access_to_active[$role_name]);
+}
 
+/**
+ * Change le poids d'un rôle dans l'administration afin de gérer
+ * l'héritage des droits
+ * @param $role_name
+ * @param $weight
+ */
 function _user_change_weight($role_name, $weight) {
     db_update('role')
         ->fields(array(
@@ -107,4 +136,21 @@ function _user_change_weight($role_name, $weight) {
         ->condition('name', $role_name, '=')
         ->execute();
 }
+
+/**
+ * Récupérer le rôle ID par le nom de rôle
+ * @param $role_name
+ * @return mixed
+ */
+function _user_get_rid_by_name($role_name) {
+    $rid = db_select('role', 'r')
+        ->fields('r', array('rid'))
+        ->condition('name', $role_name, '=')
+        ->execute()
+        ->fetchField();
+
+    return $rid;
+}
+
+
 ?>
