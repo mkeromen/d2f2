@@ -5,9 +5,12 @@
  * Ces fonctions ne doivent pas être utilisées pour migrer du contenu
  */
 
-include_once('src/user.inc');
-include_once('src/node.inc');
-include_once('src/config.inc');
+include_once('app/config.inc');
+
+include_once('src/Filesystem/filesystem.php');
+include_once('src/user.php');
+include_once('src/node.php');
+include_once('src/config.php');
 
 
 /**
@@ -27,6 +30,18 @@ function deployment_helper_menu() {
 }
 
 function _debug_deployment() {
+
+   /* $file = parse_ini_file(dirname(__DIR__) . '/deployment/config/account_settings.ini', TRUE);
+    var_dump($file);*/
+
+    //var_dump(variable_get('user_email_verification'));
+
+
+    //variable_set('user_cancel_method', 1);
+    //var_dump(variable_get('user_cancel_method'));
+
+    write_app_config();
+
     return 'Hello debug';
 }
 
