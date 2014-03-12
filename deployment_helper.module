@@ -40,7 +40,7 @@ function _debug_deployment() {
     //variable_set('user_cancel_method', 1);
     //var_dump(variable_get('user_cancel_method'));
 
-    write_app_config();
+    write_app_config('TOTO2', 'value changed');
 
     return 'Hello debug';
 }
