@@ -1,0 +1,5 @@
+name = "D2F2"
+description = "Module d'aide au déploiement - Deploy Drupal For Fun (D2F2)"
+core = 7.x
+package = "Absolunet"
+

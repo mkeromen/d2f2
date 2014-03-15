@@ -1,13 +1,14 @@
 <?php
 
-function deployment_helper_install() {
+function d2f2_install() {
     $deployment_module_name = drush_prompt('Nom de votre module de deploiement ?', 'deployment');
     variable_set('deployment_module_path', dirname(__DIR__) . '/' . $deployment_module_name);
     var_dump(variable_get('deployment_module_path'));
 }
 
-function deployment_helper_uninstall() {
+function d2f2_uninstall() {
     variable_del('deployment_module_path');
     var_dump(variable_get('deployment_module_path'));
 }
+
 ?>

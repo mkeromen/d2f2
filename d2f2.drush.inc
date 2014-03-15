@@ -7,7 +7,7 @@
 /**
  * Implements hook_drush_command()
  */
-function deployment_helper_drush_command() {
+function d2f2_drush_command() {
     $items['export-permissions'] = array(
         'description' => t('Export users permissions in permissions.json file.'),
         'arguments' => array(
@@ -26,7 +26,7 @@ function deployment_helper_drush_command() {
     return $items;
 }
 
-function drush_deployment_helper_export_permissions($module = '') {
+function drush_d2f2_export_permissions($module = '') {
     if(empty($module)) {
         return drush_set_error('You must specify the name of your deployment module.');
     }
@@ -48,7 +48,7 @@ function drush_deployment_helper_export_permissions($module = '') {
  * @param array $configs
  * @return mixed
  */
-function drush_deployment_helper_export_config($configs = array()) {
+function drush_d2f2_export_config($configs = array()) {
     if(empty($configs)) {
         return drush_log('You must specify your configs', 'error');
     }
