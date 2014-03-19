@@ -38,4 +38,8 @@ function _node_add_menu_options($type, $menus) {
     variable_set('menu_options_' . $type, $menus);
 }
 
+function _hello_world() {
+    return 'Hello world';
+}
+
 

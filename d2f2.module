@@ -5,12 +5,15 @@
  * Ces fonctions ne doivent pas être utilisées pour migrer du contenu
  */
 
-include_once('app/config.inc');
+require_once __DIR__ . '/d2f2.autoload.inc';
 
-include_once('src/Filesystem/filesystem.php');
+
+/*include_once('src/Filesystem/filesystem.php');
 include_once('src/user.php');
 include_once('src/node.php');
-include_once('src/config.php');
+include_once('src/config.php');*/
+
+
 
 
 /**
@@ -40,8 +43,9 @@ function _debug_deployment() {
     //variable_set('user_cancel_method', 1);
     //var_dump(variable_get('user_cancel_method'));
 
-    write_app_config('TOTO2', 'value changed');
+    //write_app_config('TOTO2', 'value changed');
 
+    print _hello_world();
     return 'Hello debug';
 }
 
