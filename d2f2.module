@@ -5,12 +5,14 @@
  * Ces fonctions ne doivent pas être utilisées pour migrer du contenu
  */
 
-include_once('app/config.inc');
+require_once __DIR__ . '/d2f2.autoload.inc';
 
-include_once('src/Filesystem/filesystem.php');
+
+/*include_once('src/Filesystem/filesystem.php');
 include_once('src/user.php');
 include_once('src/node.php');
-include_once('src/config.php');
+include_once('src/config.php');*/
+
 
 
 /**
@@ -31,12 +33,14 @@ function d2f2_menu() {
 
 function _debug_deployment() {
 
+
     //_write_app_config('TOTO2', 'new value 2');
     _write_app_config('TOTO3', 'new value 3');
    // _write_app_config('TOTO4', 'new value 4');
     //_write_app_config('TOTO5', 'new value 5');
     exit;
 
+    print _hello_world();
     return 'Hello debug';
 }
 
