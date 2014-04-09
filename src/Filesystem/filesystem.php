@@ -1,34 +1,35 @@
 <?php
 define('APP_CONFIG', dirname(__DIR__) . '/../app/config.inc');
 
+function _key_in_file($entries, $search_key) {
+
+    foreach($entries as $entry) {
+        if(strstr($entry, $search_key) !== FALSE) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function _write_app_config($search_key, $new_value) {
 
     $config_content = file_get_contents(APP_CONFIG);
-    $strip_content = str_replace(array('<?php', '?>'), '', $config_content);
-    //var_dump($strip_content);
+    $entries = trim(str_replace(array('<?php', '?>'), '', $config_content));
+    $entries = explode(PHP_EOL, $entries);
 
-    $entry = "define('" . $search_key . "', '" . $new_value . "');";
-    if(!empty($strip_content)) {
-        //var_dump('non empty');
-        $configs = explode(';', $strip_content);
-        foreach($configs as $item_key => $item) {
-
-            if(strstr($item, $search_key) !== FALSE) {
-                $configs[$item_key] = $entry;
-                array_pop($configs);
-            }
-        }
-    } else {
-        //var_dump('Else');
-        $configs[] = $entry;
+    if(!_key_in_file($entries, $search_key)) {
+        $entry = "define('" . $search_key . "', '" . $new_value . "');";
+        $entries[] = $entry;
     }
 
-    $new_content = '<?php ' . implode(PHP_EOL, $configs) . ' ?>';
-
-    //var_dump($new_content);exit;
+    $const = implode(PHP_EOL, $entries);
+    $new_content = <<<EOF
+<?php
+$const
+?>
+EOF;
 
     _write_in_file(APP_CONFIG, $new_content);
-
 }
 
 /**
