@@ -31,16 +31,11 @@ function d2f2_menu() {
 
 function _debug_deployment() {
 
-   /* $file = parse_ini_file(dirname(__DIR__) . '/deployment/config/account_settings.ini', TRUE);
-    var_dump($file);*/
-
-    //var_dump(variable_get('user_email_verification'));
-
-
-    //variable_set('user_cancel_method', 1);
-    //var_dump(variable_get('user_cancel_method'));
-
-    write_app_config('TOTO2', 'value changed');
+    //_write_app_config('TOTO2', 'new value 2');
+    _write_app_config('TOTO3', 'new value 3');
+   // _write_app_config('TOTO4', 'new value 4');
+    //_write_app_config('TOTO5', 'new value 5');
+    exit;
 
     return 'Hello debug';
 }

@@ -5,7 +5,7 @@
  */
 
 /**
- * Implements hook_drush_command()
+ * hook_drush_command()
  */
 function d2f2_drush_command() {
     $items['export-permissions'] = array(
@@ -18,7 +18,7 @@ function d2f2_drush_command() {
     $items['export-config'] = array(
         'description' => t('Export Drupal config'),
         'arguments' => array(
-            'config' => 'Name of Drupal config to export in user_account_settings.ini.
+            'config' => 'Name of Drupal config to export in file.ini.
             Delimit multiple using commas. Drupal config available : account',
         )
     );

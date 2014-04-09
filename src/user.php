@@ -59,6 +59,10 @@ function _user_export_permissions($file) {
     return $error;
 }
 
+/**
+ * _user_export_account_settings()
+ * Permet d'exporter les settings du compte utilisateur dans un fichier
+ */
 function _user_export_account_settings() {
 
     $account_settings = "[user_basic_settings]" . PHP_EOL;
@@ -92,18 +96,12 @@ function _user_export_account_settings() {
         $account_settings .= $mail_field . " = " . variable_get($mail_field) . PHP_EOL;
     }
 
-    $account_file = dirname(__DIR__) . '/../deployment/config/user_account_settings.ini';
-    drush_log($account_file . ' has been written !', 'success');
-    $fhandler = @fopen($account_file, 'w');
-    if(!$fhandler) {
-        drush_log('Error occurred in opening file ' . $account_file, 'error');
-    } else {
-        if(@fwrite($fhandler, $account_settings) === false) {
-            drush_log('Error occurred in writing file ' . $account_file, 'error');
-        }
-        fclose($fhandler);
+    $account_file = variable_get('deployment_module_path') . '/config/user_account_settings.ini';
+    _create_directory('config');
+    _write_in_file($account_file, $account_settings);
+    _write_app_config('ACCOUNT_FILE_PATH', $account_file);
 
-    }
+    drush_log($account_file . ' has been written !', 'success');
 }
 
 function _user_import_account_settings($file_settings_path) {
