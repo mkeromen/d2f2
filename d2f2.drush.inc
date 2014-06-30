@@ -26,14 +26,10 @@ function d2f2_drush_command() {
     return $items;
 }
 
-function drush_d2f2_export_permissions($module = '') {
-    if(empty($module)) {
-        return drush_set_error('You must specify the name of your deployment module.');
-    }
-    $file = dirname(__DIR__ ) . '/' . $module . '/config/permissions.json';
-    if(!is_file($file)) {
-        return drush_set_error('You must have folder "config/permissions.json" in your deployment module.');
-    }
+function drush_d2f2_export_permissions() {
+
+    _module_name_exist();
+    $file = _config_file_exist(PERMISSIONS_FILE);
 
     $error = _user_export_permissions($file);
     if(empty($error)) {
@@ -49,14 +45,17 @@ function drush_d2f2_export_permissions($module = '') {
  * @return mixed
  */
 function drush_d2f2_export_config($configs = array()) {
+
+    _module_name_exist();
     if(empty($configs)) {
-        return drush_log('You must specify your configs', 'error');
+        return drush_log('You must specify your configs (separate by comma)', 'error');
     }
 
     foreach(explode(',', $configs) as $config) {
         switch($config) {
             case 'account':
-                _user_export_account_settings();
+                $file = _config_file_exist(USER_ACCOUNT_SETTINGS_FILE);
+                _user_export_account_settings($file);
                 break;
             default:
                 drush_log('Unable to find this config ' . $config, 'error');
@@ -65,4 +64,27 @@ function drush_d2f2_export_config($configs = array()) {
     }
     //$configs = explode(',', $configs);
     //var_dump($configs);
+}
+
+/**
+ * @return mixed
+ */
+function _module_name_exist() {
+    $module_name = variable_get('deployment_module_name');
+    if(!isset($module_name)) {
+        return drush_set_error('You must specify the name of your deployment module.');
+    }
+}
+
+/**
+ * @param $file_name
+ * @return string
+ */
+function _config_file_exist($file_name) {
+    $module_name = variable_get('deployment_module_name');
+    $file = dirname(__DIR__ ) . '/' . $module_name . '/config/' . $file_name;
+    if(!is_file($file)) {
+        return drush_set_error('You must have folder "config/" . ' . $file_name . 'in your deployment module.');
+    }
+    return $file;
 }

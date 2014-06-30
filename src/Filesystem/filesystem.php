@@ -11,6 +11,7 @@ function _key_in_file($entries, $search_key) {
     return false;
 }
 
+/*
 function _write_app_config($search_key, $new_value) {
 
     $config_content = file_get_contents(APP_CONFIG);
@@ -30,13 +31,14 @@ $const
 EOF;
 
     _write_in_file(APP_CONFIG, $new_content);
-}
+}*/
 
 /**
  * _create_directory()
  * @param $directory_name
  * @return bool
  */
+/*
 function _create_directory($directory_name) {
     $is_created = false;
     $config_path = variable_get('deployment_module_path') . DIRECTORY_SEPARATOR . $directory_name;
@@ -46,7 +48,7 @@ function _create_directory($directory_name) {
         $is_created = true;
     }
     return $is_created;
-}
+}*/
 
 /**
  * _write_in_file()
@@ -67,7 +69,5 @@ function _write_in_file($file, $content, $mode = 'w') {
         @fclose($fhandler);
     }
 }
-
-
 
 ?>

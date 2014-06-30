@@ -1,0 +1,4 @@
+name = "*slug*"
+description = "Module de déploiement pour le projet *slug*"
+core = 7.x
+package = "Absolunet"

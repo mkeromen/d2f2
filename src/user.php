@@ -60,19 +60,41 @@ function _user_export_permissions($file) {
 }
 
 /**
+ * Setup des permissions
+ * @param $rid
+ * @param $file_access_path
+ */
+function _user_set_permissions($role_name, $permissions_path) {
+    $rid = _user_get_rid_by_name($role_name);
+    $file_content_access = file_get_contents($permissions_path);
+    $roles_access_to_active = json_decode($file_content_access, true);
+    user_role_change_permissions($rid, $roles_access_to_active[$role_name]);
+}
+
+/**
  * _user_export_account_settings()
  * Permet d'exporter les settings du compte utilisateur dans un fichier
  */
-function _user_export_account_settings() {
+function _user_export_account_settings($account_file) {
 
-    $account_settings = "[user_basic_settings]" . PHP_EOL;
-    $account_settings .= "user_admin_role = " . variable_get('user_admin_role') . PHP_EOL;
-    $account_settings .= "user_register = " . variable_get('user_register') . PHP_EOL;
-    $account_settings .= "user_cancel_method = " . variable_get('user_cancel_method') . PHP_EOL;
+    $account_settings = array(
+        'user_basic_settings' => array(
+            'user_register' => variable_get('user_register')
+        )
+    );
+
+    $user_admin_role    = variable_get('user_admin_role');
+    $user_cancel_method = variable_get('user_cancel_method');
+    if(isset($user_admin_role)) {
+        $account_settings['user_basic_settings']['user_admin_role'] = $user_admin_role;
+    }
+    if($user_cancel_method) {
+        $account_settings['user_basic_settings']['user_cancel_method'] = $user_cancel_method;
+    }
 
     $has_pictures = variable_get('user_pictures');
-    $account_settings .= "user_pictures = " . $has_pictures . PHP_EOL;
-    if((bool) $has_pictures) {
+    if(isset($has_pictures)) {
+        $account_settings['user_pictures_settings']['has_picture'] = $has_pictures;
 
         $picture_fields = db_select('variable', 'v')
             ->fields('v', array('name'))
@@ -81,11 +103,10 @@ function _user_export_account_settings() {
             ->fetchCol();
 
         foreach($picture_fields as $picture_field) {
-            $account_settings .= $picture_field . " = " . variable_get($picture_field) . PHP_EOL;
+            $account_settings['user_pictures_settings'][$picture_field] = variable_get($picture_field);
         }
     }
 
-    $account_settings .= "[user_mail_settings]" . PHP_EOL;
     $mail_fields = db_select('variable', 'v')
         ->fields('v', array('name'))
         ->condition('name', '%user_mail%', 'LIKE')
@@ -93,19 +114,17 @@ function _user_export_account_settings() {
         ->fetchCol();
 
     foreach($mail_fields as $mail_field) {
-        $account_settings .= $mail_field . " = " . variable_get($mail_field) . PHP_EOL;
+        $account_settings['user_pictures_settings'][$mail_field] = variable_get($mail_field);
     }
 
-    $account_file = variable_get('deployment_module_path') . '/config/user_account_settings.ini';
-    _create_directory('config');
-    _write_in_file($account_file, $account_settings);
-    _write_app_config('ACCOUNT_FILE_PATH', $account_file);
+    _write_in_file($account_file, json_encode($account_settings, JSON_PRETTY_PRINT));
 
     drush_log($account_file . ' has been written !', 'success');
 }
 
 function _user_import_account_settings($file_settings_path) {
-    file_get_contents($file_settings_path);
+    // TODO : Implements this
+    //file_get_contents($file_settings_path);
 }
 
 /**
@@ -157,18 +176,6 @@ function _user_set_new_role($role_name, $weight, $file_access_path) {
     if(_user_create_role($role_name, $weight)) {
         _user_set_permissions($role_name, $file_access_path);
     }
-}
-
-/**
- * Setup des permissions
- * @param $rid
- * @param $file_access_path
- */
-function _user_set_permissions($role_name, $permissions_path) {
-    $rid = _user_get_rid_by_name($role_name);
-    $file_content_access = file_get_contents($permissions_path);
-    $roles_access_to_active = json_decode($file_content_access, true);
-    user_role_change_permissions($rid, $roles_access_to_active[$role_name]);
 }
 
 /**

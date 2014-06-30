@@ -10,7 +10,6 @@ require_once __DIR__ . '/d2f2.autoload.inc';
 
 /**
  * Implements hook_menu()
- * TODO : Générer automatiquement ce hook à l'installation du module
  */
 function d2f2_menu() {
 
@@ -26,16 +25,17 @@ function d2f2_menu() {
 
 function _debug_deployment() {
 
-
+    require('/sites/all/modules/asstsas_deployment/config/permissions.json');
+    exit;
     //_write_app_config('TOTO2', 'new value 2');
-    _write_app_config('TOTO3', 'new value 3');
+    /*_write_app_config('TOTO3', 'new value 3');
     _write_app_config('TOTO4', 'new value 4');
     _write_app_config('TOTO5', 'new value 5');
     print 'HELLO WORLD';
     exit;
 
     print _hello_world();
-    return 'Hello debug';
+    return 'Hello debug';*/
 }
 
 /**

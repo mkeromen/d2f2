@@ -1,0 +1,16 @@
+{
+    "name":        "d2f2",
+    "version":     "0.1.0",
+    "description": "Aide au déploiement - Deploy Drupal For Fun (D2F2)",
+    "definition":  "",
+    "homepage":    "https://github.com/mkeromen/d2f2",
+    "author":      { "name": "Matthieu Keromen", "url": "http://www.kmelkez.com" },
+
+    "repository":  { "url":   "https://github.com/mkeromen/d2f2", "type":"git" },
+
+    "devDependencies": {
+        "execSync":   "~1.0.1-pre",
+        "inquirer":   "~0.5.1",
+        "grunt":      "~0.4.5"
+    }
+}

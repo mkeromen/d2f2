@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_install()
+ */
+function *slug*_deployment_install() {
+    for($i = 7001; $i < 7100; $i++) {
+        $candidate = '*slug*_deployment_update_' . $i;
+        if(function_exists($candidate)) $candidate();
+    }
+}
+
+/**
+ * Implements hook_update_N()
+ */
+function *slug*_deployment_update_7001() {
+    // First hook to implement dude
+}
+?>
