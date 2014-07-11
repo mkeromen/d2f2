@@ -1,0 +1,6 @@
+<?php
+$module_name = variable_get('deployment_module_name');
+define("*const*", __DIR__ . "/../../" . $module_name ."/config/*file*");
+define("*const*","user_account_settings.json");
+define("*const*","site_settings.json");
+?>

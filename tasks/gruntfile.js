@@ -3,7 +3,7 @@ module.exports = function(grunt) {
     var skeletons           = 'skeletons/',
         pattern             = /\*slug\*/g,
         moduleDirectories   = '../../',
-        filesToCreate       = ['permissions', 'user_account_settings'];
+        filesToCreate       = ['permissions', 'user_account_settings', 'site_settings'];
 
     var ifModuleExist = function(data) {
         return (!data.existing);
@@ -66,10 +66,11 @@ module.exports = function(grunt) {
                 grunt.file.write(moduleDirectories + moduleName + '/' + moduleName + '.module', grunt.config.get('build_content_module')(slug));
 
                 var configFileContent = '<?php \n';
+                configFileContent += "$module_name = variable_get('deployment_module_name'); \n";
                 for(var i=0; i< filesToCreate.length; i++) {
                     var configFile = filesToCreate[i];
                     grunt.file.write(moduleDirectories + moduleName + '/config/' + configFile + '.json');
-                    configFileContent += 'define("' + configFile.toUpperCase() + '_FILE","' + configFile + '.json"); \n';
+                    configFileContent += 'define("' + configFile.toUpperCase() + '_FILE", __DIR__ . "/../../".$module_name."/config/' + configFile + '.json"); \n';
                 }
                 configFileContent += '?>';
                 grunt.file.write('../app/config.inc', configFileContent);

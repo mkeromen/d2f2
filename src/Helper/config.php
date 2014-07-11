@@ -5,7 +5,6 @@
  * ****************************************************
  */
 
-
 /**
  * Permet de récupérer le texte depuis un fichier de config
  * pour setup les emails

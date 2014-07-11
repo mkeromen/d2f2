@@ -14,6 +14,9 @@ function *slug*_deployment_install() {
  * Implements hook_update_N()
  */
 function *slug*_deployment_update_7001() {
-    // First hook to implement dude
+    // First hook
+    theme_enable(array('*slug*', 'shiny'));
+    variable_set('theme_default', '*slug*');
+    variable_set('admin_theme', 'shiny');
 }
 ?>
